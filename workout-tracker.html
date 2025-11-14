@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Track your workout progress with ease">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Workout Tracker">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>Workout Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .date {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            height: 30px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #4ade80;
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .day-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .day-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .day-progress {
+            font-size: 0.9rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .exercise {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f9fafb;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .exercise:hover {
+            background: #f3f4f6;
+        }
+
+        .exercise.completed {
+            background: #d1fae5;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .exercise-details {
+            flex: 1;
+        }
+
+        .exercise-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .exercise-info {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .reset-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .reset-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .day-section {
+                padding: 15px;
+            }
+
+            .exercise {
+                padding: 12px;
+            }
+
+            .exercise-name {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 Workout Tracker</h1>
+            <div class="date" id="currentDate"></div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+
+        <div id="workoutContainer"></div>
+
+        <button class="reset-btn" onclick="resetWorkouts()">Reset All Workouts</button>
+    </div>
+
+    <script>
+        // Your actual workout data
+        const workoutData = {
+            "SESSION A – PUSH (Chest/Shoulders/Triceps)": [
+                { name: "Bench Press (Smith or Barbell)", info: "3 sets × 8–10 reps @ 50kg" },
+                { name: "Seated Shoulder Press", info: "3 sets × 10 reps @ 45kg" },
+                { name: "Incline DB Press", info: "2 sets × 10–12 reps" },
+                { name: "Cable Tricep Pushdown", info: "2 sets × 6 reps @ 33kg" },
+                { name: "Plank Hold", info: "2 sets × 45 seconds" }
+            ],
+            "SESSION B – PULL (Back/Biceps/Core)": [
+                { name: "Lat Pulldown", info: "3 sets × 5 reps @ 76kg" },
+                { name: "Seated Row", info: "3 sets × 5 reps @ 60kg" },
+                { name: "Bicep Curl", info: "2 sets × 10–12 reps @ 14kg" },
+                { name: "Rear Delt Fly", info: "2 sets × 12 reps @ 8kg" },
+                { name: "Hanging Knee Raise", info: "2 sets × 15 reps" }
+            ],
+            "SESSION C – LEGS + CORE": [
+                { name: "Leg Press", info: "3 sets × 10 reps @ 140kg" },
+                { name: "Walking Lunges", info: "2 sets × 10/leg @ 7kg" },
+                { name: "Leg Curl", info: "2 sets × 12 reps @ 7kg" },
+                { name: "Calf Raises", info: "2 sets × 15 reps @ 60kg" },
+                { name: "Cable Woodchop", info: "2 sets × 12 reps @ 15kg" }
+            ],
+            "SESSION D – STRENGTH CIRCUIT (Optional)": [
+                { name: "Goblet Squat", info: "3 sets × 12 reps" },
+                { name: "Push-Up / Chest Press", info: "3 sets × 12 reps" },
+                { name: "TRX Row", info: "3 sets × 12 reps" },
+                { name: "DB Shoulder Press", info: "3 sets × 12 reps" },
+                { name: "Plank Hold", info: "3 sets × 45 seconds" },
+                { name: "AirBike / Rower", info: "3 sets × 1 min" }
+            ]
+        };
+
+        // Initialize date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Load saved progress from localStorage
+        function loadProgress() {
+            const saved = localStorage.getItem('workoutProgress');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        // Save progress to localStorage
+        function saveProgress(progress) {
+            localStorage.setItem('workoutProgress', JSON.stringify(progress));
+        }
+
+        // Calculate overall progress
+        function calculateProgress() {
+            const progress = loadProgress();
+            let total = 0;
+            let completed = 0;
+
+            Object.keys(workoutData).forEach(day => {
+                workoutData[day].forEach((exercise, index) => {
+                    total++;
+                    const key = `${day}-${index}`;
+                    if (progress[key]) {
+                        completed++;
+                    }
+                });
+            });
+
+            return total > 0 ? Math.round((completed / total) * 100) : 0;
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const percentage = calculateProgress();
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = percentage + '%';
+            progressFill.textContent = percentage + '%';
+        }
+
+        // Calculate day progress
+        function calculateDayProgress(day) {
+            const progress = loadProgress();
+            let total = workoutData[day].length;
+            let completed = 0;
+
+            workoutData[day].forEach((exercise, index) => {
+                const key = `${day}-${index}`;
+                if (progress[key]) {
+                    completed++;
+                }
+            });
+
+            return `${completed}/${total} completed`;
+        }
+
+        // Render workouts
+        function renderWorkouts() {
+            const container = document.getElementById('workoutContainer');
+            const progress = loadProgress();
+            container.innerHTML = '';
+
+            if (Object.keys(workoutData).length === 0) {
+                container.innerHTML = `
+                    <div class="day-section">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>No workouts found. Add your workout data to get started!</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            Object.keys(workoutData).forEach(day => {
+                const daySection = document.createElement('div');
+                daySection.className = 'day-section';
+
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.innerHTML = `
+                    <div class="day-title">${day}</div>
+                    <div class="day-progress" id="progress-${day.replace(/\s+/g, '-')}">${calculateDayProgress(day)}</div>
+                `;
+                daySection.appendChild(dayHeader);
+
+                workoutData[day].forEach((exercise, index) => {
+                    const key = `${day}-${index}`;
+                    const isCompleted = progress[key] || false;
+
+                    const exerciseDiv = document.createElement('div');
+                    exerciseDiv.className = `exercise ${isCompleted ? 'completed' : ''}`;
+                    exerciseDiv.innerHTML = `
+                        <div class="checkbox-container">
+                            <input type="checkbox" 
+                                   id="${key}" 
+                                   ${isCompleted ? 'checked' : ''}
+                                   onchange="toggleExercise('${key}', '${day}')">
+                        </div>
+                        <div class="exercise-details">
+                            <div class="exercise-name">${exercise.name}</div>
+                            <div class="exercise-info">${exercise.info}</div>
+                        </div>
+                    `;
+                    daySection.appendChild(exerciseDiv);
+                });
+
+                container.appendChild(daySection);
+            });
+
+            updateProgressBar();
+        }
+
+        // Toggle exercise completion
+        function toggleExercise(key, day) {
+            const progress = loadProgress();
+            const checkbox = document.getElementById(key);
+            
+            if (checkbox.checked) {
+                progress[key] = true;
+            } else {
+                delete progress[key];
+            }
+
+            saveProgress(progress);
+            
+            // Update the exercise div
+            const exerciseDiv = checkbox.closest('.exercise');
+            exerciseDiv.classList.toggle('completed', checkbox.checked);
+            
+            // Update day progress
+            const dayProgressEl = document.getElementById(`progress-${day.replace(/\s+/g, '-')}`);
+            dayProgressEl.textContent = calculateDayProgress(day);
+            
+            updateProgressBar();
+        }
+
+        // Reset all workouts
+        function resetWorkouts() {
+            if (confirm('Are you sure you want to reset all workouts? This will uncheck all exercises.')) {
+                localStorage.removeItem('workoutProgress');
+                renderWorkouts();
+            }
+        }
+
+        // Initialize
+        renderWorkouts();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
